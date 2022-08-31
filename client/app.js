@@ -15,6 +15,10 @@ function login(event) {
     userName = userNameInput.value;
     loginForm.classList.remove('show');
     messagesSection.classList.add('show');
+    socket.emit('join', {
+      name: userName,
+      id: socket.id,
+    });
   }
 }
 
@@ -24,6 +28,10 @@ const sendMessage = (e) => {
     return alert('This field cannot be empty!');
   } else {
     addMessage(userName, messageContentInput.value);
+    socket.emit('message', {
+      author: userName,
+      content: messageContentInput.value,
+    });
     messageContentInput.value = '';
   }
 };
@@ -32,6 +40,7 @@ const addMessage = (author, content) => {
   const message = document.createElement('li');
   message.classList.add('message', 'message--received');
   author === userName ? message.classList.add('message--self') : '';
+  author === 'Chat Bot' ? message.classList.add('message--chat-box') : '';
   message.innerHTML = `
     <h3 class="message__author">${userName === author ? 'You' : author}</h3>
     <div class="message__content">
@@ -44,3 +53,15 @@ const addMessage = (author, content) => {
 
 loginForm.addEventListener('submit', login);
 addMessageForm.addEventListener('submit', sendMessage);
+
+const socket = io();
+//listener
+socket.on('message', ({ author, content }) => addMessage(author, content));
+
+socket.on('join', (user) =>
+  addMessage('Chat Bot', `${user.name} has joined the conversation!`)
+);
+
+socket.on('removeUser', (user) =>
+  addMessage('Chat Bot', `${user} has left the conversation... :(`)
+);
